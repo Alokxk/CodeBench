@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_18_233840) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_19_170515) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,4 +22,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_18_233840) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
   end
+
+  create_table "submissions", force: :cascade do |t|
+    t.text "code", null: false
+    t.datetime "created_at", null: false
+    t.string "language", default: "python3", null: false
+    t.text "output"
+    t.bigint "problem_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["problem_id"], name: "index_submissions_on_problem_id"
+    t.index ["status"], name: "index_submissions_on_status"
+  end
+
+  add_foreign_key "submissions", "problems"
 end
