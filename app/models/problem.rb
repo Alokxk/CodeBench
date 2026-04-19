@@ -3,6 +3,5 @@ class Problem < ApplicationRecord
 
   validates :title,           presence: true
   validates :description,     presence: true
-  validates :input,           presence: true
   validates :expected_output, presence: true
 end
