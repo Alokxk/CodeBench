@@ -1,3 +1,5 @@
+require "rack/session"
+
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
@@ -7,5 +9,10 @@ Rails.application.routes.draw do
   end
 
   require "sidekiq/web"
+  Sidekiq::Web.use(Rack::Session::Cookie, {
+    secret:    SecureRandom.hex(32),
+    same_site: true,
+    max_age:   86400
+  })
   mount Sidekiq::Web => "/sidekiq"
 end
