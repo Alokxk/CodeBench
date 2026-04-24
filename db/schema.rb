@@ -10,26 +10,27 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_19_173549) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_22_220053) do
   # These are extensions that must be enabled in order to support this database
-  enable_extension "pg_catalog.plpgsql"
+  enable_extension "plpgsql"
 
   create_table "problems", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.text "description", null: false
-    t.text "expected_output", null: false
-    t.text "input"
     t.string "title", null: false
+    t.text "description", null: false
+    t.text "input"
+    t.text "expected_output", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "difficulty", default: "easy", null: false
   end
 
   create_table "submissions", force: :cascade do |t|
-    t.text "code", null: false
-    t.datetime "created_at", null: false
-    t.string "language", default: "python3", null: false
-    t.text "output"
     t.bigint "problem_id", null: false
+    t.text "code", null: false
+    t.string "language", default: "python3", null: false
     t.string "status", default: "pending", null: false
+    t.text "output"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["problem_id"], name: "index_submissions_on_problem_id"
     t.index ["status"], name: "index_submissions_on_status"

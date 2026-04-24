@@ -5,7 +5,7 @@ module Api
       # GET /api/v1/problems
       # Returns all problems without expected_output
       def index
-        problems = Problem.select(:id, :title, :description).order(:created_at)
+        problems = Problem.select(:id, :title, :description, :difficulty).order(:created_at)
         render json: problems
       end
 
