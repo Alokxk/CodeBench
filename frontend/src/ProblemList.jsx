@@ -1,58 +1,83 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 
-const API = "http://localhost:3000/api/v1"
+const API = "http://localhost:3000/api/v1";
 
 export default function ProblemList({ onSelect }) {
-  const [problems, setProblems] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState(null)
-
-  const diffStyle = {
-    Easy:   { color: "#4ade80", fontWeight: 600 },
-    Medium: { color: "#fbbf24", fontWeight: 600 },
-    Hard:   { color: "#f87171", fontWeight: 600 }
-  }
+  const [problems, setProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetch(`${API}/problems`)
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to load problems")
-        return res.json()
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load problems");
+        return r.json();
       })
-      .then(data => { setProblems(data); setLoading(false) })
-      .catch(err  => { setError(err.message); setLoading(false) })
-  }, [])
+      .then((data) => {
+        setProblems(data);
+        setLoading(false);
+      })
+      .catch((e) => {
+        setError(e.message);
+        setLoading(false);
+      });
+  }, []);
 
-  if (loading) return <p className="muted" style={{ paddingTop: 40 }}>Loading...</p>
-  if (error)   return <p style={{ color: "#f87171", paddingTop: 40 }}>Error: {error}</p>
+  if (loading)
+    return (
+      <div className="container">
+        <p style={{ padding: "40px 20px" }}>Loading...</p>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="container">
+        <p style={{ padding: "40px 20px", color: "red" }}>Error: {error}</p>
+      </div>
+    );
 
   return (
-    <div>
-      <p className="page-title">Problems</p>
-      <p className="page-subtitle">
-        Pick a problem, write your Python solution, and submit it for evaluation.
-      </p>
+    <div className="container">
+      <div className="page-header">
+        <h2>Problems</h2>
+        <p className="page-subtitle">
+          Your code runs in a Docker container. Don't ask why it's slow.
+        </p>
+      </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th style={{ width: 50, textAlign: "center" }}>#</th>
-            <th>Title</th>
-            <th style={{ width: 120, textAlign: "center" }}>Difficulty</th>
-          </tr>
-        </thead>
-        <tbody>
-          {problems.map((p, i) => (
-            <tr key={p.id} onClick={() => onSelect(p.id)}>
-              <td className="muted" style={{ textAlign: "center" }}>{i + 1}</td>
-              <td>{p.title}</td>
-              <td style={{ textAlign: "center", ...(diffStyle[p.difficulty] || { color: "#9098c0" }) }}>
-                {p.difficulty}
-              </td>
+      <div className="table-responsive">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>S.No.</th>
+              <th>Problem</th>
+              <th>Difficulty</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {problems.map((p, i) => (
+              <tr key={p.id} onClick={() => onSelect(p.id)}>
+                <td>{i + 1}</td>
+                <td className="title-cell">{p.title}</td>
+                <td>
+                  <span
+                    className={
+                      p.difficulty === "Easy"
+                        ? "diff-easy"
+                        : p.difficulty === "Medium"
+                          ? "diff-medium"
+                          : "diff-hard"
+                    }
+                  >
+                    {p.difficulty}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  )
+  );
 }
