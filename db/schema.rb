@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_04_22_220053) do
+ActiveRecord::Schema[7.2].define(version: 2026_04_25_084526) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -22,6 +22,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_22_220053) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "difficulty", default: "easy", null: false
+    t.jsonb "test_cases", default: []
   end
 
   create_table "submissions", force: :cascade do |t|
@@ -32,6 +33,8 @@ ActiveRecord::Schema[7.2].define(version: 2026_04_22_220053) do
     t.text "output"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "test_cases_passed", default: 0
+    t.integer "test_cases_total", default: 0
     t.index ["problem_id"], name: "index_submissions_on_problem_id"
     t.index ["status"], name: "index_submissions_on_status"
   end

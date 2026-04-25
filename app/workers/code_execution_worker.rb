@@ -4,21 +4,39 @@ require "timeout"
 
 class CodeExecutionWorker
   include Sidekiq::Job
-
   sidekiq_options queue: "default", retry: 1
+
+  MAX_OUTPUT = 10 * 1024 # 10KB
 
   def perform(submission_id)
     submission = Submission.find(submission_id)
-
     return unless submission.status == "pending"
 
     submission.update!(status: "running")
 
-    # Pass both code AND the problem's input to run_code
-    result = run_code(submission.code, submission.problem.input.to_s)
-    status = evaluate(result[:output], submission.problem.expected_output, result[:error])
+    problem    = submission.problem
+    test_cases = problem.test_cases.presence || [{
+      "input"           => problem.input.to_s,
+      "expected_output" => problem.expected_output.to_s
+    }]
 
-    submission.update!(status: status, output: result[:output])
+    start_time        = Time.now
+    results           = test_cases.map { |tc| run_code(submission.code, tc["input"].to_s) }
+    execution_time_ms = ((Time.now - start_time) * 1000).to_i
+
+    passed = results.each_with_index.count do |result, i|
+      !result[:error] &&
+        result[:output].strip == test_cases[i]["expected_output"].to_s.strip
+    end
+
+    final_status = determine_status(results, passed, test_cases.size)
+
+    submission.update!(
+      status:            final_status,
+      output:            results.first[:output],
+      test_cases_passed: passed,
+      test_cases_total:  test_cases.size
+    )
 
   rescue ActiveRecord::RecordNotFound
     logger.warn "CodeExecutionWorker: submission #{submission_id} not found, skipping"
@@ -29,6 +47,13 @@ class CodeExecutionWorker
   end
 
   private
+
+  def determine_status(results, passed, total)
+    return "time_limit_exceeded" if results.any? { |r| r[:timed_out] }
+    return "runtime_error"       if results.any? { |r| r[:error] }
+    return "accepted"            if passed == total
+    "wrong_answer"
+  end
 
   def run_code(code, stdin_input)
     tmp = Tempfile.new(["solution", ".py"])
@@ -48,8 +73,8 @@ class CodeExecutionWorker
       "python3", "/solution.py"
     ]
 
-    stdout     = nil
-    stderr     = nil
+    stdout      = nil
+    stderr      = nil
     proc_status = nil
 
     Timeout.timeout(10) do
@@ -58,32 +83,26 @@ class CodeExecutionWorker
       stdout, stderr, proc_status = Open3.capture3(*cmd, stdin_data: stdin_input)
     end
 
-    had_error = !proc_status.success?
+    stdout = stdout.to_s
+    stderr = stderr.to_s
+
+    if stdout.bytesize > MAX_OUTPUT
+      stdout = stdout.byteslice(0, MAX_OUTPUT) + "\n[Output truncated]"
+    end
 
     {
-      output: stdout.to_s.strip,
-      stderr: stderr.to_s.strip,
-      error:  had_error
+      output:    stdout.strip,
+      stderr:    stderr.strip,
+      error:     !proc_status.success?,
+      timed_out: false
     }
 
   rescue Errno::ENOENT
-    { output: "", stderr: "Docker is not available", error: true }
-
+    { output: "", stderr: "Docker is not available", error: true, timed_out: false }
   rescue Timeout::Error
-    { output: "", stderr: "Time limit exceeded", error: true }
-
+    { output: "", stderr: "Time limit exceeded", error: true, timed_out: true }
   ensure
     tmp.close
     tmp.unlink
   end
-
-  def evaluate(actual_output, expected_output, had_error)
-    return "runtime_error" if had_error
-
-    actual   = actual_output.to_s.strip
-    expected = expected_output.to_s.strip
-
-    actual == expected ? "accepted" : "wrong_answer"
-  end
-
 end

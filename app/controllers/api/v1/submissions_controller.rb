@@ -44,14 +44,15 @@ module Api
 
       def submission_json(submission)
         {
-          id:         submission.id,
-          problem_id: submission.problem_id,
-          status:     submission.status,
-          output:     submission.output,
-          created_at: submission.created_at
+          id:                submission.id,
+          problem_id:        submission.problem_id,
+          status:            submission.status,
+          output:            submission.output,
+          test_cases_passed: submission.test_cases_passed,
+          test_cases_total:  submission.test_cases_total,
+          created_at:        submission.created_at
         }
       end
-
     end
   end
 end
