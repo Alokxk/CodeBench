@@ -50,6 +50,7 @@ module Api
           output:            submission.output,
           test_cases_passed: submission.test_cases_passed,
           test_cases_total:  submission.test_cases_total,
+          execution_time_ms: submission.execution_time_ms,
           created_at:        submission.created_at
         }
       end

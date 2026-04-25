@@ -9,10 +9,15 @@ class CodeExecutionWorker
   MAX_OUTPUT = 10 * 1024 # 10KB
 
   def perform(submission_id)
-    submission = Submission.find(submission_id)
-    return unless submission.status == "pending"
+    # Atomic idempotency fix
+    # Single DB operation — read + update in one atomic query
+    # Prevents race condition where two workers both read "pending"
+    # and both proceed to execute
+    updated = Submission.where(id: submission_id, status: "pending")
+                        .update_all(status: "running")
+    return if updated == 0
 
-    submission.update!(status: "running")
+    submission = Submission.find(submission_id)
 
     problem    = submission.problem
     test_cases = problem.test_cases.presence || [{
@@ -35,14 +40,17 @@ class CodeExecutionWorker
       status:            final_status,
       output:            results.first[:output],
       test_cases_passed: passed,
-      test_cases_total:  test_cases.size
+      test_cases_total:  test_cases.size,
+      execution_time_ms: execution_time_ms
     )
 
   rescue ActiveRecord::RecordNotFound
     logger.warn "CodeExecutionWorker: submission #{submission_id} not found, skipping"
-
   rescue => e
-    submission&.update!(status: "runtime_error", output: e.message)
+    Submission.where(id: submission_id).update_all(
+      status: "runtime_error",
+      output: e.message
+    )
     raise
   end
 
@@ -78,8 +86,6 @@ class CodeExecutionWorker
     proc_status = nil
 
     Timeout.timeout(10) do
-      # capture3 captures stdout, stderr, and exit status separately
-      # stdin_data passes the problem's input to the running container
       stdout, stderr, proc_status = Open3.capture3(*cmd, stdin_data: stdin_input)
     end
 
@@ -99,8 +105,10 @@ class CodeExecutionWorker
 
   rescue Errno::ENOENT
     { output: "", stderr: "Docker is not available", error: true, timed_out: false }
+
   rescue Timeout::Error
     { output: "", stderr: "Time limit exceeded", error: true, timed_out: true }
+
   ensure
     tmp.close
     tmp.unlink
