@@ -7,6 +7,7 @@ gem "puma",     "~> 6.0"
 gem "bootsnap", require: false
 gem "rack-cors"
 gem "sidekiq",  "~> 8.0"
+gem "sidekiq-cron", "~> 1.12"
 gem "redis",    "~> 5.0"
 
 group :development, :test do

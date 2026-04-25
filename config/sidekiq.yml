@@ -1,2 +1,7 @@
 :queues:
   - default
+
+:schedule:
+  submission_recovery:
+    cron: "*/5 * * * *"
+    class: SubmissionRecoveryWorker
