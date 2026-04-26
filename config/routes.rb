@@ -16,9 +16,12 @@ Rails.application.routes.draw do
     end
   end
 
-  require "sidekiq/web"
+ require "sidekiq/web"
+  Sidekiq::Web.use(Rack::Auth::Basic) do |u, p|
+    ActiveSupport::SecurityUtils.secure_compare(p, ENV.fetch("SIDEKIQ_WEB_PASSWORD"))
+  end
   Sidekiq::Web.use(Rack::Session::Cookie, {
-    secret:    SecureRandom.hex(32),
+    secret:    ENV.fetch("SIDEKIQ_WEB_SECRET"),
     same_site: true,
     max_age:   86400
   })

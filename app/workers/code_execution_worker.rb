@@ -89,7 +89,6 @@ class CodeExecutionWorker
 
     stdout, stderr, proc_status = Open3.capture3(*cmd)
 
-    # Process finished before timeout — stop the killer
     killer.kill
     killer.join
 

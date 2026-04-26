@@ -66,13 +66,14 @@ class GeminiService
     api_key = ENV["GEMINI_API_KEY"]
     raise "GEMINI_API_KEY not set" if api_key.blank?
 
-    conn = Faraday.new(url: "#{API_URL}?key=#{api_key}") do |f|
+    conn = Faraday.new(url: API_URL) do |f|
       f.request  :json
       f.response :json
       f.adapter  Faraday.default_adapter
     end
 
     response = conn.post do |req|
+      req.headers["x-goog-api-key"] = api_key
       req.body = {
         contents: [{
           parts: [{ text: prompt }]

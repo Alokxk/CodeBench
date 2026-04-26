@@ -18,7 +18,8 @@ module Api
           id:          problem.id,
           title:       problem.title,
           description: problem.description,
-          input:       problem.input
+          input:       problem.input,
+          difficulty:  problem.difficulty
         }
       rescue ActiveRecord::RecordNotFound
         render json: { error: "Problem not found" }, status: :not_found

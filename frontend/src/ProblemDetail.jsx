@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-const API = "http://localhost:3000/api/v1";
+const API = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
+
 const DONE = [
   "accepted",
   "wrong_answer",
@@ -125,6 +126,7 @@ export default function ProblemDetail({ problemId, onBack }) {
       const data = await res.json();
       if (data.results) {
         setEvaluation(data.results);
+        setTimeLeft(null);
       } else {
         setFollowupError("Could not evaluate answers.");
       }
@@ -205,17 +207,6 @@ export default function ProblemDetail({ problemId, onBack }) {
 
       <div className="detail-header">
         <h2>{problem.title}</h2>
-        <span
-          className={
-            problem.difficulty === "Easy"
-              ? "diff-easy"
-              : problem.difficulty === "Medium"
-                ? "diff-medium"
-                : "diff-hard"
-          }
-        >
-          {problem.difficulty}
-        </span>
       </div>
 
       <div className="description-box">{problem.description}</div>
