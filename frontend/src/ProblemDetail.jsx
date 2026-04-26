@@ -4,6 +4,7 @@ const API = "http://localhost:3000/api/v1";
 const DONE = [
   "accepted",
   "wrong_answer",
+  "compile_error",
   "runtime_error",
   "time_limit_exceeded",
 ];
@@ -67,6 +68,7 @@ export default function ProblemDetail({ problemId, onBack }) {
     {
       accepted: "accepted",
       wrong_answer: "wrong",
+      compile_error: "error",
       runtime_error: "error",
       time_limit_exceeded: "error",
       error: "error",
@@ -78,6 +80,7 @@ export default function ProblemDetail({ problemId, onBack }) {
       wrong_answer: "Wrong Answer",
       runtime_error: "Runtime Error",
       time_limit_exceeded: "Time Limit Exceeded",
+      compile_error: "Compile Error",
       error: "Error",
     }[result?.status] || "";
 
@@ -87,6 +90,8 @@ export default function ProblemDetail({ problemId, onBack }) {
         "Correct. But can you explain why it works? Or did you just get lucky?",
       wrong_answer:
         "Wrong Answer. The computer has no feelings. But it is judging you.",
+      compile_error:
+        "Compile Error. Python tried to read your code and gave up immediately.",
       runtime_error:
         "Runtime Error. Your code crashed harder than my motivation on Monday mornings.",
       time_limit_exceeded: "Time Limit Exceeded. O(n²) was not the move.",

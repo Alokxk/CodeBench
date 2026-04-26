@@ -8,6 +8,7 @@ class Submission < ApplicationRecord
     wrong_answer
     runtime_error
     time_limit_exceeded
+    compile_error
   ].freeze
 
   validates :code,     presence: true

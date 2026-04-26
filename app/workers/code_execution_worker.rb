@@ -54,6 +54,7 @@ class CodeExecutionWorker
 
   def determine_status(results, passed, total)
     return "time_limit_exceeded" if results.any? { |r| r[:timed_out] }
+    return "compile_error"       if results.any? { |r| r[:syntax_error] }
     return "runtime_error"       if results.any? { |r| r[:error] }
     return "accepted"            if passed == total
     "wrong_answer"
@@ -100,14 +101,15 @@ class CodeExecutionWorker
     end
 
     {
-      output:    stdout.strip,
-      stderr:    stderr.strip,
-      error:     !timed_out && !proc_status.success?,
-      timed_out: timed_out
+      output:       stdout.strip,
+      stderr:       stderr.strip,
+      error:        !timed_out && !proc_status.success?,
+      timed_out:    timed_out,
+      syntax_error: stderr.include?("SyntaxError")
     }
 
   rescue Errno::ENOENT
-    { output: "", stderr: "Docker is not available", error: true, timed_out: false }
+    { output: "", stderr: "Docker is not available", error: true, timed_out: false, syntax_error: false }
 
   ensure
     killer.kill rescue nil
