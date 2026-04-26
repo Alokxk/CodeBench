@@ -3,7 +3,7 @@ class GeminiService
 
   def self.generate_followup_questions(problem_title, problem_description, user_code)
     prompt = <<~PROMPT
-      A user solved this programming problem:
+      A user just solved this programming problem:
 
       Problem: #{problem_title}
       Description: #{problem_description}
@@ -13,9 +13,20 @@ class GeminiService
       #{user_code}
 ```
 
-      Generate exactly 3 follow-up questions to test deep understanding.
-      Each question must be specific to THIS solution, not generic.
-      Test one of: time/space complexity, data structure choice, edge cases.
+      Ask 3 short follow-up questions like a senior engineer would in a code review.
+      Each question must be:
+      - Under 20 words
+      - Conversational, not academic
+      - Specific to their actual code, not generic
+
+      Good examples:
+      "What's the time complexity here?"
+      "Why a dict instead of a list?"
+      "What happens if the array is empty?"
+
+      Bad examples (too long, too academic):
+      "Explain under what specific circumstances related to hashing..."
+      "Assuming the array could be sorted once at the beginning..."
 
       Respond with ONLY a raw JSON array. No text before or after. No markdown.
       Format: ["question 1", "question 2", "question 3"]
