@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 
 const API = "http://localhost:3000/api/v1";
-const DONE = ["accepted", "wrong_answer", "runtime_error"];
+const DONE = [
+  "accepted",
+  "wrong_answer",
+  "runtime_error",
+  "time_limit_exceeded",
+];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default function ProblemDetail({ problemId, onBack }) {
@@ -63,6 +68,7 @@ export default function ProblemDetail({ problemId, onBack }) {
       accepted: "accepted",
       wrong_answer: "wrong",
       runtime_error: "error",
+      time_limit_exceeded: "error",
       error: "error",
     }[result?.status] || "";
 
@@ -71,7 +77,20 @@ export default function ProblemDetail({ problemId, onBack }) {
       accepted: "Accepted",
       wrong_answer: "Wrong Answer",
       runtime_error: "Runtime Error",
+      time_limit_exceeded: "Time Limit Exceeded",
       error: "Error",
+    }[result?.status] || "";
+
+  const resultHumor =
+    {
+      accepted:
+        "Correct. But can you explain why it works? Or did you just get lucky?",
+      wrong_answer:
+        "Wrong Answer. The computer has no feelings. But it is judging you.",
+      runtime_error:
+        "Runtime Error. Your code crashed harder than my motivation on Monday mornings.",
+      time_limit_exceeded: "Time Limit Exceeded. O(n²) was not the move.",
+      error: "Something went wrong. Even Docker is confused.",
     }[result?.status] || "";
 
   if (error)
@@ -155,6 +174,22 @@ export default function ProblemDetail({ problemId, onBack }) {
       {result && (
         <div className={`result-box ${resultClass}`}>
           <div className="result-status">{resultLabel}</div>
+
+          {result.test_cases_total > 0 && (
+            <div className="result-meta">
+              {result.test_cases_passed}/{result.test_cases_total} test cases
+              passed
+              {result.execution_time_ms && (
+                <span>
+                  {" "}
+                  &nbsp;·&nbsp; {(result.execution_time_ms / 1000).toFixed(2)}s
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="result-humor">{resultHumor}</div>
+
           {result.output && (
             <div>
               <div className="sample-label" style={{ marginBottom: 4 }}>

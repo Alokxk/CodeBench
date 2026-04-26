@@ -1,24 +1,20 @@
 require "open3"
-require "tempfile"
-require "timeout"
+require "securerandom"
 
 class CodeExecutionWorker
   include Sidekiq::Job
+
   sidekiq_options queue: "default", retry: 1
 
-  MAX_OUTPUT = 10 * 1024 # 10KB
+  MAX_OUTPUT   = 10 * 1024
+  TIME_LIMIT_S = 10
 
   def perform(submission_id)
-    # Atomic idempotency fix
-    # Single DB operation — read + update in one atomic query
-    # Prevents race condition where two workers both read "pending"
-    # and both proceed to execute
     updated = Submission.where(id: submission_id, status: "pending")
                         .update_all(status: "running")
     return if updated == 0
 
     submission = Submission.find(submission_id)
-
     problem    = submission.problem
     test_cases = problem.test_cases.presence || [{
       "input"           => problem.input.to_s,
@@ -64,30 +60,37 @@ class CodeExecutionWorker
   end
 
   def run_code(code, stdin_input)
-    tmp = Tempfile.new(["solution", ".py"])
-    tmp.write(code)
-    tmp.flush
+    dir            = Dir.mktmpdir("codebench_")
+    container_name = "codebench_#{SecureRandom.hex(8)}"
+
+    File.write(File.join(dir, "solution.py"), code)
+    File.write(File.join(dir, "input.txt"),   stdin_input)
 
     cmd = [
       "docker", "run", "--rm",
-      "--network", "none",
-      "--memory", "128m",
+      "--name",        container_name,
+      "--network",     "none",
+      "--memory",      "128m",
       "--memory-swap", "128m",
-      "--cpus", "0.5",
-      "--ulimit", "nproc=32:32",
-      "-i",
-      "-v", "#{tmp.path}:/solution.py:ro",
+      "--cpus",        "0.5",
+      "--ulimit",      "nproc=32:32",
+      "-v", "#{dir}:/sandbox:ro",
       "python:3.11-alpine",
-      "python3", "/solution.py"
+      "sh", "-c", "python3 /sandbox/solution.py < /sandbox/input.txt"
     ]
 
-    stdout      = nil
-    stderr      = nil
-    proc_status = nil
-
-    Timeout.timeout(10) do
-      stdout, stderr, proc_status = Open3.capture3(*cmd, stdin_data: stdin_input)
+    timed_out = false
+    killer = Thread.new do
+      sleep TIME_LIMIT_S
+      timed_out = true
+      system("docker kill #{container_name} > /dev/null 2>&1")
     end
+
+    stdout, stderr, proc_status = Open3.capture3(*cmd)
+
+    # Process finished before timeout — stop the killer
+    killer.kill
+    killer.join
 
     stdout = stdout.to_s
     stderr = stderr.to_s
@@ -99,18 +102,16 @@ class CodeExecutionWorker
     {
       output:    stdout.strip,
       stderr:    stderr.strip,
-      error:     !proc_status.success?,
-      timed_out: false
+      error:     !timed_out && !proc_status.success?,
+      timed_out: timed_out
     }
 
   rescue Errno::ENOENT
     { output: "", stderr: "Docker is not available", error: true, timed_out: false }
 
-  rescue Timeout::Error
-    { output: "", stderr: "Time limit exceeded", error: true, timed_out: true }
-
   ensure
-    tmp.close
-    tmp.unlink
+    killer.kill rescue nil
+    FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
+    system("docker kill #{container_name} > /dev/null 2>&1") rescue nil
   end
 end
