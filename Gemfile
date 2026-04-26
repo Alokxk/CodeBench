@@ -8,6 +8,7 @@ gem "bootsnap", require: false
 gem "rack-cors"
 gem "sidekiq",  "~> 8.0"
 gem "sidekiq-cron", "~> 1.12"
+gem "faraday", "~> 2.0"
 gem "redis",    "~> 5.0"
 
 group :development, :test do

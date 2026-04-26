@@ -5,6 +5,14 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :problems,    only: [:index, :show]
       resources :submissions, only: [:create, :show]
+
+      resources :problems, only: [] do
+        resource :followup, only: [:create], controller: "followups" do
+          collection do
+            post :evaluate
+          end
+        end
+      end
     end
   end
 
