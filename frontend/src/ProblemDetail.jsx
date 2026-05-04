@@ -259,12 +259,30 @@ export default function ProblemDetail({ problemId, onBack }) {
 
           <div className="result-humor">{config.humor}</div>
 
+          {result.failing_input && result.status === "wrong_answer" && (
+            <div style={{ marginBottom: 10 }}>
+              <div className="sample-label" style={{ marginBottom: 4 }}>
+                Input
+              </div>
+              <pre>{result.failing_input}</pre>
+            </div>
+          )}
+
           {result.output && (
             <div>
               <div className="sample-label" style={{ marginBottom: 4 }}>
-                Output
+                {result.status === "wrong_answer" ? "Your Output" : "Output"}
               </div>
               <pre>{result.output}</pre>
+            </div>
+          )}
+
+          {result.expected_output && result.status === "wrong_answer" && (
+            <div style={{ marginTop: 10 }}>
+              <div className="sample-label" style={{ marginBottom: 4 }}>
+                Expected Output
+              </div>
+              <pre style={{ color: "#2e7d32" }}>{result.expected_output}</pre>
             </div>
           )}
         </div>

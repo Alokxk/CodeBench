@@ -32,9 +32,25 @@ class CodeExecutionWorker
 
     final_status = determine_status(results, passed, test_cases.size)
 
+    first_failure_index = results.each_with_index.find_index do |result, i|
+      result[:error] || result[:output].strip != test_cases[i]["expected_output"].to_s.strip
+    end
+
+    if first_failure_index
+      output_to_store        = results[first_failure_index][:output]
+      expected_to_store      = test_cases[first_failure_index]["expected_output"].to_s
+      failing_input_to_store = test_cases[first_failure_index]["input"].to_s
+    else
+      output_to_store        = results.first[:output]
+      expected_to_store      = nil
+      failing_input_to_store = nil
+    end
+
     submission.update!(
       status:            final_status,
-      output:            results.first[:output],
+      output:            output_to_store,
+      expected_output:   expected_to_store,
+      failing_input:     failing_input_to_store,
       test_cases_passed: passed,
       test_cases_total:  test_cases.size,
       execution_time_ms: execution_time_ms

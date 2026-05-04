@@ -48,6 +48,8 @@ module Api
           problem_id:        submission.problem_id,
           status:            submission.status,
           output:            submission.output,
+          expected_output:   submission.expected_output,
+          failing_input:     submission.failing_input,
           test_cases_passed: submission.test_cases_passed,
           test_cases_total:  submission.test_cases_total,
           execution_time_ms: submission.execution_time_ms,
