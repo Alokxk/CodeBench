@@ -16,6 +16,11 @@ module Api
           return
         end
 
+        if code.length >  65_536 # 64 KB limit
+          render json: { error: "Code is too long (Max allowed is 64 KB)" }, status: :unprocessable_entity
+          return
+        end
+
         submission = Submission.create!(
           problem:  problem,
           code:     code,

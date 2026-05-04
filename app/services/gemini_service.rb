@@ -69,6 +69,8 @@ class GeminiService
     conn = Faraday.new(url: API_URL) do |f|
       f.request  :json
       f.response :json
+      f.options.timeout      = 30
+      f.options.open_timeout = 5
       f.adapter  Faraday.default_adapter
     end
 
