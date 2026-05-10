@@ -2,6 +2,18 @@
 
 A code judge that doesn't just check your output — it checks if you understand your solution. Submit Python code, run it in an isolated Docker container, get evaluated against multiple test cases. On accepted, Gemini generates follow-up questions specific to your code and evaluates your answers.
 
+![CodeBench Architecture](./assets/codebench-dark.png)
+
+![Rails](https://img.shields.io/badge/Rails-7.2+-CC0000?style=flat&logo=rubyonrails&logoColor=CC0000)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=flat&logo=postgresql&logoColor=4169E1)
+![Redis](https://img.shields.io/badge/Redis-7+-DC382D?style=flat&logo=redis&logoColor=DC382D)
+![Sidekiq](https://img.shields.io/badge/Sidekiq-8+-B1003E?style=flat&logo=sidekiq&logoColor=B1003E)
+![Docker](https://img.shields.io/badge/Docker-Sandbox-2496ED?style=flat&logo=docker&logoColor=2496ED)
+
+
+## Demo
+https://github.com/user-attachments/assets/8afdcc0c-d4b5-4f59-b3b4-d74a107e8d5d
+
 ## How It Works
 
 1. User submits Python code via the React frontend
@@ -21,6 +33,7 @@ Key decisions:
 - **Docker sandbox** for isolation — no network, memory capped, read-only filesystem, hard time limit
 - **Sidekiq** keeps the web process non-blocking during code execution
 - **Gemini via raw HTTP** — no SDK needed for a single endpoint
+- **SubmissionRecoveryWorker** runs every 5 minutes via Sidekiq cron to re-enqueue stuck `pending` submissions and mark crashed `running` submissions as `runtime_error`
 
 ## Sandbox Constraints
 
